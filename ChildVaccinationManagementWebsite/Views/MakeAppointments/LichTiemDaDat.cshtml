@@ -1,0 +1,100 @@
+﻿@model List<ChildVaccinationManagementWebsite.Controllers.MakeAppointment>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Danh sách các cuộc hẹn đã đặt</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Danh sách các cuộc hẹn đã đặt</h2>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    @*<th>Appointment ID</th>*@
+                    <th>Email</th>
+                    <th>Tên bệnh nhân</th>
+                    <th>Ngày sinh bệnh nhân</th>
+                    <th>Ngày tiêm chủng</th>
+                    <th>Giờ tiêm chủng</th>
+                    <th>Tên loại vaccine</th>
+                    <th>Trạng thái</th>
+                    <th>Duyệt</th> <!-- Thêm cột cho nút duyệt -->
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var appointment in Model)
+                {
+                    <tr>
+                        @*<td>@appointment.AppointmentId</td>*@
+                        <td>@appointment.Email</td>
+                        <td>@appointment.PatientName</td>
+                        <td>@appointment.PatientDOB.ToShortDateString()</td>
+                        <td>@appointment.VaccinationDate.ToString("dddd, dd MMMM yyyy")</td>
+                        <td>@appointment.VaccinationTime</td>
+                        <td>@appointment.VaccineName</td>
+                        <td>@appointment.Status</td>
+                        <td>
+                            @if (appointment.Status == "pending")
+                            {
+                                <!-- Hiển thị nút duyệt chỉ khi trạng thái là "pending" -->
+                                <form id="confirmForm" action="/MakeAppointments/DuyetCuocHen" method="post">
+                                    @Html.Hidden("id", appointment.AppointmentId)
+                                    <button type="button" class="btn btn-success" id="confirmBtn">Duyệt</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal xác nhận -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Xác nhận</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    Bạn có chắc chắn muốn duyệt cuộc hẹn này không?
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-success" id="confirmBtnModal">Xác nhận</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Hiển thị modal khi nút "Duyệt" được nhấp vào
+            $('#confirmBtn').click(function () {
+                $('#confirmModal').modal('show'); // Hiển thị modal
+            });
+
+            // Xác nhận khi người dùng nhấp vào nút "Xác nhận" trong modal
+            $('#confirmBtnModal').click(function () {
+                $('#confirmForm').submit(); // Gửi form sau khi xác nhận
+                $('#confirmModal').modal('hide'); // Ẩn modal
+            });
+        });
+    </script>
+</body>
+</html>
