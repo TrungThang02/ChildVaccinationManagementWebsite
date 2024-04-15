@@ -1,122 +1,152 @@
-﻿using FireSharp.Config;
-using FireSharp.Interfaces;
-using FireSharp.Response;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
-
-using ChildVaccinationManagementWebsite.Models;
 using Google.Cloud.Firestore;
-using static Google.Cloud.Firestore.V1.StructuredQuery.Types;
+using Firebase.Storage;
+using ChildVaccinationManagementWebsite.Models;
 
 namespace ChildVaccinationManagementWebsite.Controllers
 {
     public class NewsController : Controller
     {
-        private FirestoreDb db;
+        private readonly FirestoreDb _firestoreDb;
+        private readonly FirebaseStorage _firebaseStorage;
 
-
-
-        IFirebaseConfig config = new FirebaseConfig
+        public NewsController()
         {
-            AuthSecret = "AIzaSyBPT-VmHUsrR41HofEewU68VDRj-2qF5Vc",
-            BasePath = "childvaccinationmanageme-f8806.appspot.com",
-            
-    };
-        IFirebaseClient client;
-        // GET: Student
-        public ActionResult Index()
+            string projectId = "childvaccinationmanageme-f8806";
+            _firestoreDb = FirestoreDb.Create(projectId);
+
+            string firebaseBucket = "childvaccinationmanageme-f8806.appspot.com";
+            _firebaseStorage = new FirebaseStorage(firebaseBucket);
+        }
+
+        public async Task<ActionResult> Index()
         {
-            client = new FireSharp.FirebaseClient(config);
-            FirebaseResponse response = client.Get("User");
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(response.Body);
-            var list = new List<User>();
-            foreach (var item in data)
+            try
             {
-                list.Add(JsonConvert.DeserializeObject<User>(((JProperty)item).Value.ToString()));
+                QuerySnapshot querySnapshot = await _firestoreDb.Collection("news").GetSnapshotAsync();
+                List<NewsItem> newsList = new List<NewsItem>();
+
+                foreach (DocumentSnapshot documentSnapshot in querySnapshot.Documents)
+                {
+                    Dictionary<string, object> data = documentSnapshot.ToDictionary();
+                    string title = data.ContainsKey("title") ? data["title"]?.ToString() : "Title not found";
+                    string image = data.ContainsKey("image") ? data["image"]?.ToString() : "Image URL not found";
+                    string description = data.ContainsKey("description") ? data["description"]?.ToString() : "Description not found";
+
+                    NewsItem newsItem = new NewsItem
+                    {
+                        Title = title,
+                        Image = image,
+                        Description = description
+                    };
+                    newsList.Add(newsItem);
+                }
+
+                return View(newsList);
             }
-            return View(list);
-        }
-
-
-        [HttpGet]
-        public ActionResult Create()
-        {
-            return View();
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Error loading news: " + ex.Message;
+                return View(new List<NewsItem>());
+            }
         }
 
         [HttpPost]
-        public ActionResult Create(Student student) { 
-        //{
-        //    try
-        //    {
-        //        var path = "";
-        //        if (file.ContentLength > 0)
-        //        {
-        //            if ((Path.GetExtension(file.FileName).ToLower() == ".jpg") || (Path.GetExtension(file.FileName).ToLower() == ".png"))
-        //            {
-        //                path = Path.Combine(Server.MapPath("~/Content/img/mobiles/"), file.FileName);
-
-        //            }
-
-        //        }
-        //        AddStudentToFirebase(student);
-        //        ModelState.AddModelError(string.Empty, "Added Successfully");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ModelState.AddModelError(string.Empty, ex.Message);
-        //    }
-
-            return View();
-        }
-
-        private void AddStudentToFirebase(Student student)
+        public async Task<ActionResult> AddNews(string title, string description, HttpPostedFileBase image)
         {
-            client = new FireSharp.FirebaseClient(config);
-            var data = student;
-            PushResponse response = client.Push("Students/", data);
-            data.student_id = response.Result.name;
-            SetResponse setResponse = client.Set("Students/" + data.student_id, data);
-        }
+            try
+            {
+                string imageUrl = await UploadImageToStorage(image);
+                DocumentReference docRef = _firestoreDb.Collection("news").Document();
+                Dictionary<string, object> data = new Dictionary<string, object>
+                {
+                    { "title", title },
+                    { "description", description },
+                    { "image", imageUrl }
+                };
+                await docRef.SetAsync(data);
 
-        [HttpGet]
-        public ActionResult Detail(string id)
-        {
-            client = new FireSharp.FirebaseClient(config);
-            FirebaseResponse response = client.Get("Students/" + id);
-            Student data = JsonConvert.DeserializeObject<Student>(response.Body);
-            return View(data);
-        }
-
-        [HttpGet]
-        public ActionResult Edit(string id)
-        {
-            client = new FireSharp.FirebaseClient(config);
-            FirebaseResponse response = client.Get("Students/" + id);
-            Student data = JsonConvert.DeserializeObject<Student>(response.Body);
-            return View(data);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Error adding news: " + ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpPost]
-        public ActionResult Edit(Student student)
+        public async Task<ActionResult> EditNews(string id, string newTitle, string newDescription, HttpPostedFileBase newImage)
         {
-            client = new FireSharp.FirebaseClient(config);
-            SetResponse response = client.Set("Students/" + student.student_id, student);
-            return RedirectToAction("Index");
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    throw new ArgumentException("News ID is required.");
+                }
+
+                string newImageUrl = null;
+                if (newImage != null && newImage.ContentLength > 0)
+                {
+                    newImageUrl = await UploadImageToStorage(newImage);
+                }
+
+                DocumentReference docRef = _firestoreDb.Collection("news").Document(id);
+
+                Dictionary<string, object> data = new Dictionary<string, object>
+                {
+                    { "title", newTitle },
+                    { "description", newDescription }
+                };
+
+                if (!string.IsNullOrEmpty(newImageUrl))
+                {
+                    data["image"] = newImageUrl;
+                }
+
+                await docRef.SetAsync(data, SetOptions.MergeAll);
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Error editing news: " + ex.Message;
+                return View("Error");
+            }
         }
 
-        [HttpGet]
-        public ActionResult Delete(string id)
+        [HttpPost]
+        public async Task<ActionResult> DeleteNews(string id)
         {
-            client = new FireSharp.FirebaseClient(config);
-            FirebaseResponse response = client.Delete("Students/" + id);
-            return RedirectToAction("Index");
+            try
+            {
+                await _firestoreDb.Collection("news").Document(id).DeleteAsync();
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Error deleting news: " + ex.Message;
+                return View("Error");
+            }
+        }
+
+        private async Task<string> UploadImageToStorage(HttpPostedFileBase image)
+        {
+            string imageName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await image.InputStream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+                await _firebaseStorage.Child("news_images").Child(imageName).PutAsync(memoryStream);
+            }
+
+            return await _firebaseStorage.Child("news_images").Child(imageName).GetDownloadUrlAsync();
         }
     }
 }

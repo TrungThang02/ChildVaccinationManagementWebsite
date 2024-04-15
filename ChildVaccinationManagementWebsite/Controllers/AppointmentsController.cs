@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Google.Cloud.Firestore;
-
+using ChildVaccinationManagementWebsite.Models;
 namespace ChildVaccinationManagementWebsite.Controllers
 {
     public class AppointmentsController : Controller
@@ -86,15 +86,9 @@ namespace ChildVaccinationManagementWebsite.Controllers
             // Chuyển hướng trở lại trang danh sách cuộc hẹn
             return RedirectToAction("LichTiem");
         }
-
+       
     }
 
-    // Định nghĩa lớp MakeAppointment để lưu trữ dữ liệu
-    public class Appointment
-    {
-        public string Id { get; set; } // Thêm thuộc tính Id
-        public string Name { get; set; }
-        public string Time { get; set; }
-    }
+
 
 }

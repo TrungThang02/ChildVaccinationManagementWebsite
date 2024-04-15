@@ -1,5 +1,4 @@
-﻿@model List<ChildVaccinationManagementWebsite.Controllers.Appointment>
-
+﻿@model List<ChildVaccinationManagementWebsite.Models.Appointment>
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,9 +6,15 @@
     <title>Make Appointments</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
+<style>
+    .table > thead {
+        background: #7eb0cd;
+        color: #fff;
+    }
+</style>
 <body>
     <div class="container">
-        <h1 class="mt-5 mb-4">Quản lý lịch tiêm</h1>
+        <h1 class="">Quản lý lịch tiêm</h1>
         <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addAppointmentModal">Add Appointment</button>
 
         <!-- Add Appointment Modal -->
@@ -45,7 +50,7 @@
 
 
         <table class="table">
-            <thead class="thead-dark">
+            <thead>
                 <tr>
                     <th scope="col">Name</th>
                     <th scope="col">Time</th>

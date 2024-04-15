@@ -1,0 +1,204 @@
+﻿@model List<ChildVaccinationManagementWebsite.Models.Vaccine>
+
+@{
+    ViewBag.Title = "Danh sách Vaccin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .table > thead {
+        background: #7eb0cd;
+        color: #fff;
+    }
+</style>
+<h2>Danh sách Vaccin</h2>
+
+<button type="button" class="btn btn-success" data-toggle="modal" data-target="#addModal">Thêm mới</button>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tên Vaccine</th>
+            <th>Thông tin</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var vaccine in Model)
+        {
+            <tr>
+                <td>@vaccine.VaccineName</td>
+                <td>@vaccine.Info</td>
+                <td>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editModal" data-id="@vaccine.Id" data-name="@vaccine.VaccineName" data-info="@vaccine.Info">Sửa</button>
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal" data-id="@vaccine.Id">Xóa</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal Thêm mới -->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addModalLabel">Thêm mới Vaccine</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-group">
+                        <label for="addVaccineName">Tên Vaccine</label>
+                        <input type="text" class="form-control" id="addVaccineName" name="addVaccineName">
+                    </div>
+                    <div class="form-group">
+                        <label for="addInfo">Thông tin</label>
+                        <input type="text" class="form-control" id="addInfo" name="addInfo">
+                    </div>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="addVaccine()">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Sửa -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Sửa Vaccine</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <div class="form-group">
+                        <label for="editVaccineName">Tên Vaccine</label>
+                        <input type="text" class="form-control" id="editVaccineName" name="editVaccineName">
+                    </div>
+                    <div class="form-group">
+                        <label for="editInfo">Thông tin</label>
+                        <input type="text" class="form-control" id="editInfo" name="editInfo">
+                    </div>
+                    <input type="hidden" id="editVaccineId" name="editVaccineId">
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="editVaccine()">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Xóa Vaccine</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Bạn có chắc chắn muốn xóa Vaccine này?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="deleteButton">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery and Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+@section scripts{
+    <script>
+        $('#addModal').on('hidden.bs.modal', function () {
+            $(this).find('form').trigger('reset');
+        });
+
+        $('#editModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var vaccineId = button.data('id');
+            var vaccineName = button.data('name');
+            var info = button.data('info');
+            var modal = $(this);
+            modal.find('.modal-body #editVaccineId').val(vaccineId);
+            modal.find('.modal-body #editVaccineName').val(vaccineName);
+            modal.find('.modal-body #editInfo').val(info);
+        });
+
+        function addVaccine() {
+            var newName = $('#addVaccineName').val();
+            var newInfo = $('#addInfo').val();
+            $.ajax({
+                url: '/Vaccinelist/AddVaccine',
+                type: 'POST',
+                data: {
+                    vaccineName: newName,
+                    info: newInfo
+                },
+                success: function () {
+                    $('#addModal').modal('hide');
+                    location.reload();
+                }
+            });
+        }
+
+        function editVaccine() {
+            var id = $('#editVaccineId').val();
+            var newName = $('#editVaccineName').val();
+            var newInfo = $('#editInfo').val();
+            $.ajax({
+                url: '/Vaccinelist/EditVaccine',
+                type: 'POST',
+                data: {
+                    id: id,
+                    newVaccineName: newName,
+                    newInfo: newInfo
+                },
+                success: function () {
+                    $('#editModal').modal('hide');
+                    location.reload();
+                }
+            });
+        }
+
+        $('#deleteModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var vaccineId = button.data('id');
+            var modal = $(this);
+            modal.find('.modal-footer #deleteButton').click(function () {
+                deleteVaccine(vaccineId);
+            });
+        });
+
+        function deleteVaccine(id) {
+            $.ajax({
+                url: '/Vaccinelist/DeleteVaccine',
+                type: 'POST',
+                data: {
+                    id: id
+                },
+                success: function () {
+                    $('#deleteModal').modal('hide');
+                    location.reload();
+                }
+            });
+        }
+    </script>
+}

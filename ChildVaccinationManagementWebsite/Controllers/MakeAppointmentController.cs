@@ -1,39 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Mvc;
 using Google.Cloud.Firestore;
+using ChildVaccinationManagementWebsite.Models;
 
 namespace ChildVaccinationManagementWebsite.Controllers
 {
-    public class MakeAppointmentsController : Controller
+    public class MakeAppointmentController : Controller
     {
+
         private FirestoreDb _firestoreDb;
 
-        public MakeAppointmentsController()
+        public MakeAppointmentController()
         {
-            // Khởi tạo Firestore client
-            string projectId = "childvaccinationmanageme-f8806"; // Thay thế bằng ID của project Firestore của bạn
+            // Initialize Firestore client
+            string projectId = "childvaccinationmanageme-f8806"; // Replace with your Firestore project ID
             _firestoreDb = FirestoreDb.Create(projectId);
         }
 
         // GET: LichTiemDaDat
         public async Task<ActionResult> LichTiemDaDat()
         {
-            // Lấy danh sách các cuộc hẹn từ Firestore
+            // Get list of appointments from Firestore
             CollectionReference appointmentsRef = _firestoreDb.Collection("MakeAppointments");
             QuerySnapshot querySnapshot = await appointmentsRef.GetSnapshotAsync();
 
-            // Tạo danh sách để lưu trữ các cuộc hẹn
+            // Create list to store appointments
             List<MakeAppointment> appointmentsList = new List<MakeAppointment>();
 
-            // Lặp qua các mục và thêm vào danh sách
+            // Loop through documents and add to list
             foreach (DocumentSnapshot documentSnapshot in querySnapshot.Documents)
             {
                 Dictionary<string, object> data = documentSnapshot.ToDictionary();
                 MakeAppointment makeappointment = new MakeAppointment
                 {
-                    AppointmentId = documentSnapshot.Id, // Lấy ID của document
+                    AppointmentId = documentSnapshot.Id, // Get document ID
                     Email = data["email"]?.ToString(),
                     PatientDOB = DateTime.Parse(data["patientDOB"]?.ToString()),
                     PatientName = data["patientName"]?.ToString(),
@@ -45,39 +49,28 @@ namespace ChildVaccinationManagementWebsite.Controllers
                 appointmentsList.Add(makeappointment);
             }
 
-            // Truyền danh sách vào view để hiển thị
+            // Pass list to view for display
             return View(appointmentsList);
         }
 
-        // Action để đánh dấu cuộc hẹn là "done"
+        // Action to mark appointment as "done"
         public async Task<ActionResult> DuyetCuocHen(string id)
         {
-            // Lấy reference đến document cần sửa
+            // Get reference to document to update
             DocumentReference docRef = _firestoreDb.Collection("MakeAppointments").Document(id);
 
-            // Update trạng thái của cuộc hẹn thành "done"
+            // Update appointment status to "done"
             Dictionary<string, object> data = new Dictionary<string, object>
             {
                 { "status", "done" }
             };
             await docRef.UpdateAsync(data);
 
-            // Chuyển hướng trở lại trang danh sách cuộc hẹn
+            // Redirect back to appointments list page
             return RedirectToAction("LichTiemDaDat");
         }
 
-    }
-
-    // Định nghĩa lớp MakeAppointment để lưu trữ dữ liệu
-    public class MakeAppointment
-    {
-        public string AppointmentId { get; set; } // Thêm thuộc tính AppointmentId
-        public string Email { get; set; }
-        public DateTime PatientDOB { get; set; }
-        public string PatientName { get; set; }
-        public string Status { get; set; }
-        public DateTime VaccinationDate { get; set; }
-        public string VaccinationTime { get; set; }
-        public string VaccineName { get; set; }
+      
+        
     }
 }

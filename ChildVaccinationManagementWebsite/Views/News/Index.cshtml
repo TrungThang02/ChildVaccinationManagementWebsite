@@ -1,0 +1,150 @@
+﻿@model List<ChildVaccinationManagementWebsite.Models.NewsItem>
+@{
+    ViewBag.Title = "News";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>News</h2>
+
+<p>
+    <button class="btn btn-primary" data-toggle="modal" data-target="#addNewsModal">Add News</button>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Image</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td><img src="@item.Image" alt="Image" style="max-width: 200px;" /></td>
+                <td>@item.Description</td>
+                <td>
+                    <button class="btn btn-primary editBtn" data-toggle="modal" data-target="#editNewsModal" data-id="@item.Id" data-title="@item.Title" data-image="@item.Image" data-description="@item.Description">Edit</button>
+                    <button class="btn btn-danger deleteBtn" data-toggle="modal" data-target="#deleteNewsModal" data-id="@item.Id">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Add News Modal -->
+<div class="modal fade" id="addNewsModal" tabindex="-1" role="dialog" aria-labelledby="addNewsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addNewsModalLabel">Add News</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("AddNews", "News", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="form-group">
+                        <label for="title">Title:</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="image">Image:</label>
+                        <input type="file" class="form-control" id="image" name="image" required accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea class="form-control" id="description" name="description" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit News Modal -->
+<div class="modal fade" id="editNewsModal" tabindex="-1" role="dialog" aria-labelledby="editNewsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editNewsModalLabel">Edit News</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("EditNews", "News", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <input type="hidden" id="editId" name="id" />
+                    <div class="form-group">
+                        <label for="newTitle">Title:</label>
+                        <input type="text" class="form-control" id="newTitle" name="newTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newImage">Image:</label>
+                        <input type="file" class="form-control" id="newImage" name="newImage" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label for="newDescription">Description:</label>
+                        <textarea class="form-control" id="newDescription" name="newDescription" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete News Modal -->
+<div class="modal fade" id="deleteNewsModal" tabindex="-1" role="dialog" aria-labelledby="deleteNewsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteNewsModalLabel">Delete News</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("DeleteNews", "News", FormMethod.Post))
+                {
+                    <input type="hidden" id="deleteId" name="id" />
+                    <p>Are you sure you want to delete this news?</p>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Edit News
+            $('.editBtn').click(function () {
+                var id = $(this).data('id');
+                var title = $(this).data('title');
+                var image = $(this).data('image');
+                var description = $(this).data('description');
+
+                $('#editNewsModal').find('#editId').val(id);
+                $('#editNewsModal').find('#newTitle').val(title);
+                $('#editNewsModal').find('#newDescription').val(description);
+            });
+
+            // Delete News
+            $('.deleteBtn').click(function () {
+                var id = $(this).data('id');
+                $('#deleteNewsModal').find('#deleteId').val(id);
+            });
+        });
+    </script>
+}

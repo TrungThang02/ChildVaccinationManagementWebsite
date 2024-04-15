@@ -1,0 +1,76 @@
+﻿@model List<ChildVaccinationManagementWebsite.Models.MakeAppointment>
+@{
+    ViewBag.Title = "Danh sách cuộc hẹn";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .table > thead {
+        background: #7eb0cd;
+        color: #fff;
+    }
+</style>
+<h2>Danh sách cuộc hẹn</h2>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>STT</th>
+                <th>Tên bệnh nhân</th>
+                <th>Ngày sinh</th>
+                <th>Email</th>
+                <th>Tên vaccine</th>
+                <th>Ngày tiêm</th>
+                <th>Giờ tiêm</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var appointment in Model)
+            {
+                <tr>
+                    <td>@(Model.IndexOf(appointment) + 1)</td>
+                    <td>@appointment.PatientName</td>
+                    <td>@appointment.PatientDOB.ToShortDateString()</td>
+                    <td>@appointment.Email</td>
+                    <td>@appointment.VaccineName</td>
+                    <td>@appointment.VaccinationDate.ToShortDateString()</td>
+                    <td>@appointment.VaccinationTime</td>
+                    <td>@appointment.Status</td>
+                    <td>
+                        @if (appointment.Status != "done")
+                        {
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal-@(appointment.AppointmentId)">Duyệt cuộc hẹn</button>
+                            <!-- Modal -->
+                            <div class="modal fade" id="myModal-@(appointment.AppointmentId)" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="myModalLabel">Xác nhận duyệt cuộc hẹn</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Bạn có chắc chắn muốn duyệt cuộc hẹn này không?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                                            <a href="@Url.Action("DuyetCuocHen", "MakeAppointment", new { id = appointment.AppointmentId })" class="btn btn-primary">Duyệt</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+}
